@@ -1,0 +1,15 @@
+.chart-container {
+    width: 50vw;  /* Make the chart half of the screen width */
+    height: 400px;
+  }
+
+  .tooltip {
+    position: absolute;
+    background-color: white;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    pointer-events: none;
+    font-size: 14px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  }

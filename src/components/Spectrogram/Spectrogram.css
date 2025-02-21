@@ -1,0 +1,38 @@
+.chart-container {
+  width: 50vw;  /* Make the chart half of the screen width */
+  height: 400px;
+  margin: 0 auto; /* Center the chart horizontally */
+}
+
+.tooltip {
+  position: absolute;
+  background-color: white;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  pointer-events: none;
+  font-size: 14px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Wrapper for the chart and the legend */
+.chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the chart and legend horizontally */
+  width: 100%;
+}
+
+#legend-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the legend */
+  margin-top: 20px; /* Adjust spacing between the heatmap and the legend */
+  width: 100%; /* Ensure the legend doesn't exceed the width of the parent */
+}
+
+.legend-label {
+  margin-bottom: 8px; /* Space between the label and the color bar */
+  font-size: 16px;
+  font-weight: bold;
+}
