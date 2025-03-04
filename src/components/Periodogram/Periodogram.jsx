@@ -93,7 +93,7 @@ const PeriodogramChart = ({ data }) => {
       .attr("x", width / 2) // Position the label horizontally centered
       .attr("y", height + margin.bottom - 20) // Position the label just below the x-axis
       .style("text-anchor", "middle") // Align the text to the center
-      .text("Frequency"); // Set the label text
+      .text("Frequency (Hz)"); // Set the label text
 
     const yAxis = chartArea.append("g").call(d3.axisLeft(y).ticks(5, "~s"));
 
@@ -104,7 +104,7 @@ const PeriodogramChart = ({ data }) => {
       .attr("y", -margin.left + 20) // Position it on the left
       .attr("x", -height / 2) // Center it vertically on the axis
       .style("text-anchor", "middle") // Align the text to the center
-      .text("Power Spectral Density (Log scale)"); // Set the label text
+      .text("Power Spectral Density (℃²/Hz) (Log scale)"); // Set the label text
 
     // **🔹 Define Clipping Path (Restricts Drawing to Bounds)**
     svg
