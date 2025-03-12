@@ -22,3 +22,31 @@ select {
   padding: 8px;
   font-size: 16px;
 }
+
+/* --- New styles for chart & stats layout --- */
+.main-container {
+  display: flex;
+  flex-direction: row; /* Arrange items side by side */
+  align-items: flex-start; /* Align everything to the top */
+  width: 100%;
+  max-width: 1200px; /* Prevent it from stretching too much */
+  justify-content: space-between;
+  gap: 20px; /* Optional: Adds space between chart and summary stats */
+}
+
+.chart-summary-container {
+  position: relative;
+  display: flex;
+  flex-direction: row; /* Arrange the chart and stats side by side */
+  justify-content: space-between;
+  align-items: flex-start;
+  width:20%
+}
+
+.chart-content {
+  flex: 1; /* Let the chart take most of the space */
+  max-width: 70%; /* Adjust size as needed */
+}
+
+
+
