@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   mean,
   median,
@@ -13,11 +13,38 @@ import {
 import "./SummaryStats.css";
 
 const SummaryStats = ({ data }) => {
-  if (!data || !data.values || data.values.length == 0) {
+  const [statsData, setStatsData] = useState(data);
+
+  // Effect to check for window.visibleTimeSeriesData (set by TimeSeriesChart)
+  useEffect(() => {
+    // Function to check for updated visible data
+    const checkForVisibleData = () => {
+      if (
+        window.visibleTimeSeriesData &&
+        window.visibleTimeSeriesData.dates &&
+        window.visibleTimeSeriesData.dates.length > 0
+      ) {
+        setStatsData(window.visibleTimeSeriesData);
+      } else {
+        setStatsData(data);
+      }
+    };
+
+    // Check immediately
+    checkForVisibleData();
+
+    // Set up interval to check periodically
+    const intervalId = setInterval(checkForVisibleData, 300);
+
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [data]);
+
+  if (!statsData || !statsData.values || statsData.values.length === 0) {
     return <div className="summary-menu"> No data available </div>;
   }
 
-  const values = data.values;
+  const values = statsData.values;
   const avg = mean(values).toFixed(2);
   const med = median(values).toFixed(2);
   const minimum = min(values);

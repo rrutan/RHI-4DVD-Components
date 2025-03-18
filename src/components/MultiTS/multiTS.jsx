@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import Trendline from "../Trend/Trend";
-import "./TimeSeriesChart.css";
+import "../TS/TimeSeriesChart.css";
 
-const TimeSeriesChart = ({
+const MultiTS = ({
   data,
+  data2,
   showTrendline = true,
   onVisibleDataChange = null,
   yAxisTitle = "Temperature (°C)",
@@ -28,6 +29,12 @@ const TimeSeriesChart = ({
   });
 
   useEffect(() => {
+    // Ensure we have data and data2
+    if (!data || !data2 || !data.dates || !data2.dates) {
+      console.error("Missing data for MultiTS chart");
+      return;
+    }
+
     const margin = { top: 10, right: 30, bottom: 80, left: 60 };
     const width = chartRef.current.clientWidth - margin.left - margin.right;
     const height = 500 - margin.top - margin.bottom;
@@ -78,31 +85,38 @@ const TimeSeriesChart = ({
       value: data.values[index],
     }));
 
+    const parsedData2 = data2.dates.map((date, index) => ({
+      date: d3.timeParse("%Y-%m-%d")(date),
+      value: data2.values[index],
+    }));
+
+    console.log("Data 1:", parsedData.length, "points");
+    console.log("Data 2:", parsedData2.length, "points");
+
     // Initial set of visible data
     setVisibleData(parsedData);
-
-    // Update window.visibleTimeSeriesData for SummaryStats to access
-    window.visibleTimeSeriesData = {
-      dates: data.dates,
-      values: data.values,
-      title: data.title,
-      units: data.units,
-    };
-
     if (onVisibleDataChange) {
       onVisibleDataChange(parsedData);
     }
 
-    // Create scales
-    const x = d3
-      .scaleTime()
-      .domain(d3.extent(parsedData, (d) => d.date))
-      .range([0, width]);
+    // Create scales with combined domain from both datasets
+    const allDates = [
+      ...parsedData.map((d) => d.date),
+      ...parsedData2.map((d) => d.date),
+    ];
+    const x = d3.scaleTime().domain(d3.extent(allDates)).range([0, width]);
 
+    const allValues = [
+      ...parsedData.map((d) => d.value),
+      ...parsedData2.map((d) => d.value),
+    ];
     const y = d3
       .scaleLinear()
-      .domain(d3.extent(parsedData, (d) => d.value))
-      .nice() // Nicer axis bounds
+      .domain([
+        d3.min(allValues) * 0.95, // Add some padding
+        d3.max(allValues) * 1.05,
+      ])
+      .nice()
       .range([height, 0]);
 
     const xAxis = chartArea
@@ -132,7 +146,7 @@ const TimeSeriesChart = ({
       .style("text-anchor", "middle")
       .text(yAxisTitle);
 
-    // Gradient
+    // Create gradient for first line
     const gradient = svg
       .append("linearGradient")
       .attr("id", "line-gradient")
@@ -153,6 +167,27 @@ const TimeSeriesChart = ({
       .attr("offset", (d) => d.offset)
       .attr("stop-color", (d) => d.color);
 
+    // Create gradient for second line
+    const gradient2 = svg
+      .append("linearGradient")
+      .attr("id", "line-gradient-2")
+      .attr("gradientUnits", "userSpaceOnUse")
+      .attr("x1", 0)
+      .attr("y1", y(d3.min(parsedData2, (d) => d.value)))
+      .attr("x2", 0)
+      .attr("y2", y(d3.max(parsedData2, (d) => d.value)));
+
+    gradient2
+      .selectAll("stop")
+      .data([
+        { offset: "0%", color: "yellow" },
+        { offset: "100%", color: "pink" },
+      ])
+      .enter()
+      .append("stop")
+      .attr("offset", (d) => d.offset)
+      .attr("stop-color", (d) => d.color);
+
     // Clipping path
     svg
       .append("defs")
@@ -162,25 +197,46 @@ const TimeSeriesChart = ({
       .attr("width", width)
       .attr("height", height);
 
-    // Create line
+    // Create line generators
     const line = d3
       .line()
       .x((d) => x(d.date))
-      .y((d) => y(d.value));
+      .y((d) => y(d.value))
+      .defined((d) => !isNaN(d.value)); // Skip points with NaN values
 
+    const line2 = d3
+      .line()
+      .x((d) => x(d.date))
+      .y((d) => y(d.value))
+      .defined((d) => !isNaN(d.value)); // Skip points with NaN values
+
+    // Add first line
     const lineChart = chartArea
       .append("g")
-      .attr("class", "line-group")
+      .attr("class", "line-group-1")
       .attr("clip-path", "url(#clip)")
       .append("path")
       .datum(parsedData)
-      .attr("class", "line")
+      .attr("class", "line-1")
       .attr("fill", "none")
       .attr("stroke", "url(#line-gradient)")
       .attr("stroke-width", 2)
       .attr("d", line);
 
-    // Create legend
+    // Add second line with gradient
+    const lineChart2 = chartArea
+      .append("g")
+      .attr("class", "line-group-2")
+      .attr("clip-path", "url(#clip)")
+      .append("path")
+      .datum(parsedData2)
+      .attr("class", "line-2")
+      .attr("fill", "none")
+      .attr("stroke", "url(#line-gradient-2)") // Use the second gradient
+      .attr("stroke-width", 2.5) // Slightly thicker
+      .attr("d", line2);
+
+    // Create legend with proper positioning and separate entries
     const legend = svg
       .append("g")
       .attr("class", "chart-legend")
@@ -189,6 +245,7 @@ const TimeSeriesChart = ({
         `translate(${width - 160}, ${height + margin.top + 40})`
       );
 
+    // First line in legend
     legend
       .append("line")
       .attr("x1", 0)
@@ -202,7 +259,24 @@ const TimeSeriesChart = ({
       .append("text")
       .attr("x", 25)
       .attr("y", 4)
-      .text(data.title || "Data")
+      .text(data.title || "Location 1")
+      .style("font-size", "12px");
+
+    // Second line in legend - positioned below the first
+    legend
+      .append("line")
+      .attr("x1", 0)
+      .attr("y1", 20) // Positioned below first legend item
+      .attr("x2", 20)
+      .attr("y2", 20)
+      .attr("stroke", "url(#line-gradient-2)") // Match the actual gradient
+      .attr("stroke-width", 2.5); // Match the line thickness
+
+    legend
+      .append("text")
+      .attr("x", 25)
+      .attr("y", 24) // Aligned with second legend line
+      .text(data2.title || "Location 2")
       .style("font-size", "12px");
 
     // Create hover elements
@@ -213,7 +287,15 @@ const TimeSeriesChart = ({
       .attr("fill", "black")
       .style("opacity", 0);
 
+    const focus2 = svg
+      .append("circle")
+      .attr("class", "focus-circle-2")
+      .attr("r", 5)
+      .attr("fill", "purple") // Use a color from the middle of the gradient
+      .style("opacity", 0);
+
     chartDimensionsRef.current.focus = focus;
+    chartDimensionsRef.current.focus2 = focus2;
 
     const hoverLine = svg
       .append("line")
@@ -266,7 +348,6 @@ const TimeSeriesChart = ({
 
     // Store the current visible domain
     let currentXDomain = x.domain();
-    let currentYDomain = y.domain();
 
     // Bisector for finding data points
     const bisectDate = d3.bisector((d) => d.date).left;
@@ -279,13 +360,24 @@ const TimeSeriesChart = ({
       // Update axes
       xAxis.call(d3.axisBottom(newX));
 
-      // Update the line
+      // Update the first line
       lineChart.attr(
         "d",
         d3
           .line()
           .x((d) => newX(d.date))
           .y((d) => y(d.value))
+          .defined((d) => !isNaN(d.value))
+      );
+
+      // Update the second line
+      lineChart2.attr(
+        "d",
+        d3
+          .line()
+          .x((d) => newX(d.date))
+          .y((d) => y(d.value))
+          .defined((d) => !isNaN(d.value))
       );
 
       // Store the current visible domain
@@ -297,21 +389,6 @@ const TimeSeriesChart = ({
       );
 
       setVisibleData(newVisibleData);
-
-      // KEY CHANGE: Update window.visibleTimeSeriesData for SummaryStats to access
-      if (newVisibleData && newVisibleData.length > 0) {
-        window.visibleTimeSeriesData = {
-          dates: newVisibleData.map((d) => {
-            if (d.date instanceof Date) {
-              return d.date.toISOString().split("T")[0];
-            }
-            return d.date;
-          }),
-          values: newVisibleData.map((d) => d.value),
-          title: data.title,
-          units: data.units,
-        };
-      }
 
       if (onVisibleDataChange) {
         onVisibleDataChange(newVisibleData);
@@ -335,50 +412,95 @@ const TimeSeriesChart = ({
       // Convert to date
       const date = currentX.invert(mouseX);
 
-      // Find nearest data point
+      // Find nearest data point in first dataset
       const index = bisectDate(parsedData, date, 1);
+      let d = null;
 
       // Handle edge cases
-      if (index <= 0 || index >= parsedData.length) {
+      if (index > 0 && index < parsedData.length) {
+        // Get data points before and after
+        const d0 = parsedData[index - 1];
+        const d1 = parsedData[index];
+
+        // Determine which point is closer
+        d = date - d0.date > d1.date - date ? d1 : d0;
+      }
+
+      // Find the closest point in the second dataset
+      const index2 = bisectDate(parsedData2, date, 1);
+      let d2 = null;
+
+      if (index2 > 0 && index2 < parsedData2.length) {
+        const d2_0 = parsedData2[index2 - 1];
+        const d2_1 = parsedData2[index2];
+        d2 = date - d2_0.date > d2_1.date - date ? d2_1 : d2_0;
+      }
+
+      // If we found no points, hide tooltip
+      if (!d && !d2) {
         return hideTooltip();
       }
 
-      // Get data points before and after
-      const d0 = parsedData[index - 1];
-      const d1 = parsedData[index];
-
-      // Determine which point is closer
-      const d = date - d0.date > d1.date - date ? d1 : d0;
-
-      // Position focus elements
-      focus
-        .attr("cx", currentX(d.date))
-        .attr("cy", y(d.value))
-        .attr("transform", `translate(${margin.left},${margin.top})`)
-        .style("opacity", 1);
+      // Position the hover line at the current date position
+      const hoverDate = d ? d.date : d2.date;
 
       hoverLine
-        .attr("x1", currentX(d.date) + margin.left)
-        .attr("x2", currentX(d.date) + margin.left)
+        .attr("x1", currentX(hoverDate) + margin.left)
+        .attr("x2", currentX(hoverDate) + margin.left)
         .attr("y1", margin.top)
         .attr("y2", height + margin.top)
         .style("opacity", 1);
 
+      // Position focus elements for first dataset
+      if (d) {
+        focus
+          .attr("cx", currentX(d.date))
+          .attr("cy", y(d.value))
+          .attr("transform", `translate(${margin.left},${margin.top})`)
+          .style("opacity", 1);
+      } else {
+        focus.style("opacity", 0);
+      }
+
+      // Position focus elements for second dataset
+      if (d2) {
+        focus2
+          .attr("cx", currentX(d2.date))
+          .attr("cy", y(d2.value))
+          .attr("transform", `translate(${margin.left},${margin.top})`)
+          .style("opacity", 1);
+      } else {
+        focus2.style("opacity", 0);
+      }
+
+      // Build tooltip content
+      let tooltipHTML = `<strong>Date:</strong> ${d3.timeFormat("%Y-%m-%d")(
+        hoverDate
+      )}<br>`;
+
+      if (d) {
+        tooltipHTML += `<strong>${
+          data.title || "Location 1"
+        }:</strong> ${d.value.toFixed(2)} ${data.units || ""}<br>`;
+      }
+
+      if (d2) {
+        tooltipHTML += `<strong>${
+          data2.title || "Location 2"
+        }:</strong> ${d2.value.toFixed(2)} ${data2.units || ""}`;
+      }
+
       // Update tooltip
       tooltip
         .style("opacity", 1)
-        .html(
-          `<strong>Date:</strong> ${d3.timeFormat("%Y-%m-%d")(d.date)}<br>
-           <strong>${data.title || "Value"}:</strong> ${d.value.toFixed(2)} ${
-            data.units || ""
-          }`
-        )
+        .html(tooltipHTML)
         .style("left", `${event.pageX + 15}px`)
         .style("top", `${event.pageY - 30}px`);
     }
 
     function hideTooltip() {
       focus.style("opacity", 0);
+      focus2.style("opacity", 0);
       hoverLine.style("opacity", 0);
       tooltip.style("opacity", 0);
     }
@@ -406,10 +528,8 @@ const TimeSeriesChart = ({
     // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
-      // Clean up global variable on unmount
-      delete window.visibleTimeSeriesData;
     };
-  }, [data, onVisibleDataChange, yAxisTitle]);
+  }, [data, data2, onVisibleDataChange, yAxisTitle]);
 
   // Handle trendline
   useEffect(() => {
@@ -498,4 +618,4 @@ const TimeSeriesChart = ({
   return <div className="chart-container" ref={chartRef}></div>;
 };
 
-export default TimeSeriesChart;
+export default MultiTS;

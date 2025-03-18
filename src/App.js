@@ -1,13 +1,15 @@
-import React, { useState } from "react"; // Ensure useState is imported
+import React, { useState } from "react";
 import TimeSeriesChart from "./components/TS/TimeSeriesChart";
-import Spectrogram from "./components/Spectrogram/Spectrogram"; // Ensure the correct import path
+import Spectrogram from "./components/Spectrogram/Spectrogram";
 import tsData from "./components/TS/time_series_data.json";
+import tsData2 from "./components/TS/time_series_data2.json";
 import spData from "./components/Spectrogram/spectrogram_data2.json";
 import PeriodogramChart from "./components/Periodogram/Periodogram";
 import Histogram from "./components/Histogram/Histogram";
 import SummaryStats from "./components/SummaryStats/SummaryStats";
 import "./App.css";
 import GaugeChart from "./components/Gauge/Gauge";
+import MultiTS from "./components/MultiTS/multiTS";
 
 function App() {
   // Define state for toggling between Time Series and Spectrogram
@@ -44,6 +46,7 @@ function App() {
           <option value="periodogram">Periodogram</option>
           <option value="histogram">Histogram</option>
           <option value="gauge">GaugeChart</option>
+          <option value="multi TS">Multi TimeSeries</option>
         </select>
 
         {/* Show the stats button ONLY when Time Series is selected */}
@@ -66,6 +69,13 @@ function App() {
         <div className="chart-content">
           {selectedChart === "timeSeries" && (
             <TimeSeriesChart data={tsData} showTrendline={showTrendline} />
+          )}
+          {selectedChart === "multi TS" && (
+            <MultiTS
+              data={tsData}
+              data2={tsData2}
+              showTrendline={showTrendline}
+            />
           )}
           {selectedChart === "spectrogram" && (
             <Spectrogram spectrogramData={spData} />
