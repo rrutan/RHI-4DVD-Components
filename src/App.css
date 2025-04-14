@@ -77,3 +77,60 @@ select, button {
     margin-bottom: 10px;
   }
 }
+
+/* Add these styles to your App.css file */
+
+/* This will style both your existing select and the download data select */
+.header-container select {
+  background-color: #f8f8f8; /* Match the gray color of your buttons */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 8px;
+  appearance: auto; /* Keep the native dropdown arrow */
+}
+
+/* Apply the same hover effect as your buttons */
+.header-container select:hover {
+  background-color: #e8e8e8;
+}
+
+/* If your buttons have any other specific styles, you may need to add them here */
+
+/* Add these styles to your App.css file */
+
+/* Increase font size for all buttons and selects in the header */
+.header-container button,
+.header-container select {
+  font-size: 16px; /* Increase from 14px to 16px */
+  padding: 8px 14px; /* Slightly increase padding to accommodate larger text */
+}
+
+/* You may need to adjust the height if the buttons look too tall or short */
+.header-container button {
+  height: auto; /* Let the height adjust to content */
+  min-height: 38px; /* Ensure minimum height */
+}
+
+/* Make select elements match the height of buttons */
+.header-container select {
+  height: 38px; /* Match button height */
+}
+
+/* If you want even larger text, you can adjust these values */
+/* For example, to make the text even larger: */
+/*
+.header-container button,
+.header-container select {
+  font-size: 18px;
+  padding: 10px 16px;
+}
+
+.header-container button,
+.header-container select {
+  min-height: 42px;
+  height: 42px;
+}
+*/

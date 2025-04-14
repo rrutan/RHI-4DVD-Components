@@ -55,10 +55,24 @@ const SummaryStats = ({ data }) => {
   const kurtosis = sampleKurtosis(values).toFixed(2);
   const q25 = quantile(values, 0.25).toFixed(2);
   const q75 = quantile(values, 0.75).toFixed(2);
-
+  const startdate = statsData.dates[0];
+  const enddate = statsData.dates[statsData.dates.length - 1];
+  const dataVar = "Temperature °F";
+  const location = "El Centro, CA";
+  const coords = "32.7920° N, 115.5631° W";
   return (
     <div className="summary-menu">
       <h3>Summary Statistics</h3>
+      <h4>
+        {location}
+        <br />
+        {coords}
+      </h4>
+      <h4>{dataVar}</h4>
+      <h4>
+        {startdate} to {enddate}
+      </h4>
+
       <div className="summary-item">
         <strong>Min:</strong> <span>{minimum}</span>
       </div>

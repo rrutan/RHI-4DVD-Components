@@ -1,4 +1,9 @@
 {
+  "location": {
+    "name": "El Centro, CA",
+    "latitude":  32.7920,
+    "longitude": -115.5631
+  },
   "dates": [
     "2023-01-01",
     "2023-01-02",

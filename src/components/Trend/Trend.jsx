@@ -48,7 +48,7 @@ const Trendline = ({
       .attr("x", 25)
       .attr("y", 4)
       .text("Linear Trend")
-      .style("font-size", "12px");
+      .style("font-size", "18px");
   };
 
   // Function to calculate R-squared for trendline
@@ -135,7 +135,7 @@ const Trendline = ({
     const equationGroup = chartArea
       .append("g")
       .attr("class", "trendline-info-group")
-      .attr("transform", `translate(${width - 10}, 10)`);
+      .attr("transform", `translate( 300, 10)`);
 
     // Calculate text width and height for background sizing
     // Create temporary text element to measure

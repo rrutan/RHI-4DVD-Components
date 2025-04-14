@@ -105,23 +105,40 @@ const TimeSeriesChart = ({
       .nice() // Nicer axis bounds
       .range([height, 0]);
 
+    // Create X-axis with larger tick labels
     const xAxis = chartArea
       .append("g")
       .attr("class", "x-axis")
       .attr("transform", `translate(0,${height})`)
       .call(d3.axisBottom(x));
 
+    // Increase font size of X-axis tick labels
+    // Re-apply larger font size and rotation to tick labels after zoom
+    // Re-apply larger font size and rotation to tick labels after zoom
+    xAxis
+      .selectAll("text")
+      .style("font-size", "14px")
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", ".15em")
+      .attr("transform", "rotate(-45)");
+
     chartArea
       .append("text")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom - 20)
+      .attr("y", height + margin.bottom)
       .style("text-anchor", "middle")
-      .text("Date");
+      .text("Date")
+      .style("font-size", "28px");
 
+    // Create Y-axis with larger tick labels
     const yAxis = chartArea
       .append("g")
       .attr("class", "y-axis")
       .call(d3.axisLeft(y));
+
+    // Increase font size of Y-axis tick labels
+    yAxis.selectAll("text").style("font-size", "16px");
 
     // Y-axis title
     chartArea
@@ -130,7 +147,8 @@ const TimeSeriesChart = ({
       .attr("y", -margin.left + 20)
       .attr("x", -height / 2)
       .style("text-anchor", "middle")
-      .text(yAxisTitle);
+      .text(yAxisTitle)
+      .style("font-size", "25px");
 
     // Gradient
     const gradient = svg
@@ -184,10 +202,7 @@ const TimeSeriesChart = ({
     const legend = svg
       .append("g")
       .attr("class", "chart-legend")
-      .attr(
-        "transform",
-        `translate(${width - 160}, ${height + margin.top + 40})`
-      );
+      .attr("transform", `translate(${width - 50}, ${margin.top})`);
 
     legend
       .append("line")
@@ -203,7 +218,7 @@ const TimeSeriesChart = ({
       .attr("x", 25)
       .attr("y", 4)
       .text(data.title || "Data")
-      .style("font-size", "12px");
+      .style("font-size", "18px");
 
     // Create hover elements
     const focus = svg
@@ -278,6 +293,16 @@ const TimeSeriesChart = ({
 
       // Update axes
       xAxis.call(d3.axisBottom(newX));
+
+      // Re-apply larger font size to tick labels after zoom
+      // Re-apply larger font size and rotation to tick labels after zoom
+      xAxis
+        .selectAll("text")
+        .style("font-size", "14px")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", "rotate(-45)");
 
       // Update the line
       lineChart.attr(
