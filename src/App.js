@@ -59,6 +59,16 @@ function App() {
     }
   };
 
+  // Function to handle visible data updates from MultiTS component
+  const handleVisibleDataChange = (visibleData) => {
+    window.visibleTimeSeriesData = visibleData;
+  };
+
+  // Function to handle visible data updates for second dataset from MultiTS
+  const handleVisibleData2Change = (visibleData) => {
+    window.visibleTimeSeriesData2 = visibleData;
+  };
+
   return (
     <div className="App">
       <div className="header-container">
@@ -75,7 +85,7 @@ function App() {
         </select>
 
         {/* Chart control buttons */}
-        {selectedChart === "timeSeries" && (
+        {(selectedChart === "timeSeries" || selectedChart === "multi TS") && (
           <>
             <button onClick={toggleStats}>
               {showStats
@@ -102,7 +112,10 @@ function App() {
 
       <div className="main-container">
         {/* Chart Section */}
-        <div className="chart-content" ref={chartContainerRef}>
+        <div
+          className={`chart-content ${!showStats ? "full-width" : ""}`}
+          ref={chartContainerRef}
+        >
           {selectedChart === "timeSeries" && (
             <TimeSeriesChart data={tsData} showTrendline={showTrendline} />
           )}
@@ -111,6 +124,8 @@ function App() {
               data={tsData}
               data2={tsData2}
               showTrendline={showTrendline}
+              onVisibleDataChange={handleVisibleDataChange}
+              onVisibleData2Change={handleVisibleData2Change}
             />
           )}
           {selectedChart === "spectrogram" && (
@@ -123,10 +138,13 @@ function App() {
           {selectedChart === "histogram" && <Histogram data={tsData} />}
         </div>
 
-        {/* Summary Stats Section (Only Rendered if button was clicked) */}
-        {selectedChart === "timeSeries" && showStats && (
-          <div className="summary-stats">
-            <SummaryStats data={tsData} />
+        {/* Summary Stats Section */}
+        {showStats && (
+          <div className="stats-container">
+            {selectedChart === "timeSeries" && <SummaryStats data={tsData} />}
+            {selectedChart === "multi TS" && (
+              <SummaryStats data={tsData} data2={tsData2} />
+            )}
           </div>
         )}
       </div>

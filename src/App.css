@@ -28,7 +28,7 @@ select, button {
 /* Main container to hold chart and stats side by side */
 .main-container {
   display: grid;
-  grid-template-columns: 1fr 250px; /* Match your summary-menu width */
+  grid-template-columns: 1fr 320px; /* Increased from 250px to 320px */
   grid-gap: 20px;
   width: 100%;
 }
@@ -58,21 +58,21 @@ select, button {
   .main-container {
     grid-template-columns: 1fr; /* Single column on mobile */
   }
-  
+    
   .chart-content, .stats-container {
     grid-column: 1; /* Everything in single column */
   }
-  
+    
   .header-container {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+    
   h1 {
     margin-bottom: 15px;
     margin-right: 0;
   }
-  
+    
   select, button {
     margin-bottom: 10px;
   }
@@ -97,13 +97,8 @@ select, button {
   background-color: #e8e8e8;
 }
 
-/* If your buttons have any other specific styles, you may need to add them here */
-
-/* Add these styles to your App.css file */
-
 /* Increase font size for all buttons and selects in the header */
-.header-container button,
-.header-container select {
+.header-container button, .header-container select {
   font-size: 16px; /* Increase from 14px to 16px */
   padding: 8px 14px; /* Slightly increase padding to accommodate larger text */
 }
@@ -118,19 +113,3 @@ select, button {
 .header-container select {
   height: 38px; /* Match button height */
 }
-
-/* If you want even larger text, you can adjust these values */
-/* For example, to make the text even larger: */
-/*
-.header-container button,
-.header-container select {
-  font-size: 18px;
-  padding: 10px 16px;
-}
-
-.header-container button,
-.header-container select {
-  min-height: 42px;
-  height: 42px;
-}
-*/

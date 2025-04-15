@@ -8,6 +8,7 @@ const MultiTS = ({
   data2,
   showTrendline = true,
   onVisibleDataChange = null,
+  onVisibleData2Change = null,
   yAxisTitle = "Temperature (°C)",
 }) => {
   const chartRef = useRef();
@@ -17,6 +18,7 @@ const MultiTS = ({
   const tooltipRef = useRef(null);
   const [trendlineInstance, setTrendlineInstance] = useState(null);
   const [visibleData, setVisibleData] = useState([]);
+  const [visibleData2, setVisibleData2] = useState([]);
 
   // Store chart dimensions and elements for reuse
   const chartDimensionsRef = useRef({
@@ -93,10 +95,25 @@ const MultiTS = ({
     console.log("Data 1:", parsedData.length, "points");
     console.log("Data 2:", parsedData2.length, "points");
 
-    // Initial set of visible data
+    // Initial set of visible data for both datasets
     setVisibleData(parsedData);
+    setVisibleData2(parsedData2);
+
+    // Call callbacks if provided
     if (onVisibleDataChange) {
-      onVisibleDataChange(parsedData);
+      onVisibleDataChange({
+        ...data,
+        values: parsedData.map((d) => d.value),
+        dates: parsedData.map((d) => d3.timeFormat("%Y-%m-%d")(d.date)),
+      });
+    }
+
+    if (onVisibleData2Change) {
+      onVisibleData2Change({
+        ...data2,
+        values: parsedData2.map((d) => d.value),
+        dates: parsedData2.map((d) => d3.timeFormat("%Y-%m-%d")(d.date)),
+      });
     }
 
     // Create scales with combined domain from both datasets
@@ -119,23 +136,41 @@ const MultiTS = ({
       .nice()
       .range([height, 0]);
 
+    // Create X-axis with larger tick labels
     const xAxis = chartArea
       .append("g")
       .attr("class", "x-axis")
       .attr("transform", `translate(0,${height})`)
       .call(d3.axisBottom(x));
 
+    // Increase font size of X-axis tick labels and rotate
+    xAxis
+      .selectAll("text")
+      .style("font-size", "14px")
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", ".15em")
+      .attr("transform", "rotate(-45)");
+
+    // X-axis title
     chartArea
       .append("text")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom - 20)
+      .attr("y", height + margin.bottom)
+      .attr("class", "axis-title")
       .style("text-anchor", "middle")
+      .style("font-size", "28px")
+      .style("font-weight", "bold")
       .text("Date");
 
+    // Create Y-axis with larger tick labels
     const yAxis = chartArea
       .append("g")
       .attr("class", "y-axis")
       .call(d3.axisLeft(y));
+
+    // Increase font size of Y-axis tick labels
+    yAxis.selectAll("text").style("font-size", "16px");
 
     // Y-axis title
     chartArea
@@ -143,7 +178,10 @@ const MultiTS = ({
       .attr("transform", "rotate(-90)")
       .attr("y", -margin.left + 20)
       .attr("x", -height / 2)
+      .attr("class", "axis-title")
       .style("text-anchor", "middle")
+      .style("font-size", "25px")
+      .style("font-weight", "bold")
       .text(yAxisTitle);
 
     // Create gradient for first line
@@ -210,7 +248,7 @@ const MultiTS = ({
       .y((d) => y(d.value))
       .defined((d) => !isNaN(d.value)); // Skip points with NaN values
 
-    // Add first line
+    // Add first line with increased thickness
     const lineChart = chartArea
       .append("g")
       .attr("class", "line-group-1")
@@ -220,7 +258,7 @@ const MultiTS = ({
       .attr("class", "line-1")
       .attr("fill", "none")
       .attr("stroke", "url(#line-gradient)")
-      .attr("stroke-width", 2)
+      .attr("stroke-width", 2.5)
       .attr("d", line);
 
     // Add second line with gradient
@@ -232,18 +270,15 @@ const MultiTS = ({
       .datum(parsedData2)
       .attr("class", "line-2")
       .attr("fill", "none")
-      .attr("stroke", "url(#line-gradient-2)") // Use the second gradient
-      .attr("stroke-width", 2.5) // Slightly thicker
+      .attr("stroke", "url(#line-gradient-2)")
+      .attr("stroke-width", 2.5)
       .attr("d", line2);
 
     // Create legend with proper positioning and separate entries
     const legend = svg
       .append("g")
       .attr("class", "chart-legend")
-      .attr(
-        "transform",
-        `translate(${width - 160}, ${height + margin.top + 40})`
-      );
+      .attr("transform", `translate(${width - 160}, ${margin.top})`);
 
     // First line in legend
     legend
@@ -253,31 +288,31 @@ const MultiTS = ({
       .attr("x2", 20)
       .attr("y2", 0)
       .attr("stroke", "url(#line-gradient)")
-      .attr("stroke-width", 2);
+      .attr("stroke-width", 2.5);
 
     legend
       .append("text")
       .attr("x", 25)
       .attr("y", 4)
-      .text(data.title || "Location 1")
-      .style("font-size", "12px");
+      .text("Yuma, CA")
+      .style("font-size", "18px");
 
     // Second line in legend - positioned below the first
     legend
       .append("line")
       .attr("x1", 0)
-      .attr("y1", 20) // Positioned below first legend item
+      .attr("y1", 25) // Increased spacing
       .attr("x2", 20)
-      .attr("y2", 20)
-      .attr("stroke", "url(#line-gradient-2)") // Match the actual gradient
-      .attr("stroke-width", 2.5); // Match the line thickness
+      .attr("y2", 25)
+      .attr("stroke", "url(#line-gradient-2)")
+      .attr("stroke-width", 2.5);
 
     legend
       .append("text")
       .attr("x", 25)
-      .attr("y", 24) // Aligned with second legend line
-      .text(data2.title || "Location 2")
-      .style("font-size", "12px");
+      .attr("y", 29) // Aligned with second legend line
+      .text("Bombay Beach, CA")
+      .style("font-size", "18px");
 
     // Create hover elements
     const focus = svg
@@ -319,36 +354,6 @@ const MultiTS = ({
       legend,
     };
 
-    // Create a container for mouse events
-    const overlay = chartArea
-      .append("rect")
-      .attr("class", "overlay")
-      .attr("width", width)
-      .attr("height", height)
-      .style("fill", "none")
-      .style("pointer-events", "all");
-
-    // Define the zoom behavior
-    const zoom = d3
-      .zoom()
-      .scaleExtent([1, 50])
-      .translateExtent([
-        [0, 0],
-        [width, height],
-      ])
-      .extent([
-        [0, 0],
-        [width, height],
-      ])
-      .on("zoom", handleZoom);
-
-    // Add zoom behavior to svg
-    svg.call(zoom);
-    zoomRef.current = zoom;
-
-    // Store the current visible domain
-    let currentXDomain = x.domain();
-
     // Bisector for finding data points
     const bisectDate = d3.bisector((d) => d.date).left;
 
@@ -359,6 +364,15 @@ const MultiTS = ({
 
       // Update axes
       xAxis.call(d3.axisBottom(newX));
+
+      // Reapply font size and rotation to x-axis labels after zoom
+      xAxis
+        .selectAll("text")
+        .style("font-size", "14px")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", "rotate(-45)");
 
       // Update the first line
       lineChart.attr(
@@ -381,23 +395,62 @@ const MultiTS = ({
       );
 
       // Store the current visible domain
-      currentXDomain = newX.domain();
+      const currentXDomain = newX.domain();
 
-      // Calculate visible data
+      // Calculate visible data for both datasets
       const newVisibleData = parsedData.filter(
         (d) => d.date >= currentXDomain[0] && d.date <= currentXDomain[1]
       );
 
-      setVisibleData(newVisibleData);
+      const newVisibleData2 = parsedData2.filter(
+        (d) => d.date >= currentXDomain[0] && d.date <= currentXDomain[1]
+      );
 
+      setVisibleData(newVisibleData);
+      setVisibleData2(newVisibleData2);
+
+      // Update window variables for SummaryStats
+      window.visibleTimeSeriesData = {
+        ...data,
+        dates: newVisibleData.map((d) => d3.timeFormat("%Y-%m-%d")(d.date)),
+        values: newVisibleData.map((d) => d.value),
+      };
+
+      window.visibleTimeSeriesData2 = {
+        ...data2,
+        dates: newVisibleData2.map((d) => d3.timeFormat("%Y-%m-%d")(d.date)),
+        values: newVisibleData2.map((d) => d.value),
+      };
+
+      // Call callbacks with the formatted data for SummaryStats component
       if (onVisibleDataChange) {
-        onVisibleDataChange(newVisibleData);
+        onVisibleDataChange({
+          ...data,
+          values: newVisibleData.map((d) => d.value),
+          dates: newVisibleData.map((d) => d3.timeFormat("%Y-%m-%d")(d.date)),
+        });
+      }
+
+      if (onVisibleData2Change) {
+        onVisibleData2Change({
+          ...data2,
+          values: newVisibleData2.map((d) => d.value),
+          dates: newVisibleData2.map((d) => d3.timeFormat("%Y-%m-%d")(d.date)),
+        });
       }
 
       // Update trendline if needed
       if (showTrendline && trendlineInstance) {
         trendlineInstance.updateTrendline(newX);
       }
+    }
+
+    // Function to hide tooltip and focus elements
+    function hideTooltip() {
+      focus.style("opacity", 0);
+      focus2.style("opacity", 0);
+      hoverLine.style("opacity", 0);
+      tooltip.style("opacity", 0);
     }
 
     // Mousemove handler for tooltip
@@ -424,6 +477,10 @@ const MultiTS = ({
 
         // Determine which point is closer
         d = date - d0.date > d1.date - date ? d1 : d0;
+      } else if (index === parsedData.length && parsedData.length > 0) {
+        d = parsedData[index - 1];
+      } else if (index === 0 && parsedData.length > 0) {
+        d = parsedData[0];
       }
 
       // Find the closest point in the second dataset
@@ -434,6 +491,10 @@ const MultiTS = ({
         const d2_0 = parsedData2[index2 - 1];
         const d2_1 = parsedData2[index2];
         d2 = date - d2_0.date > d2_1.date - date ? d2_1 : d2_0;
+      } else if (index2 === parsedData2.length && parsedData2.length > 0) {
+        d2 = parsedData2[index2 - 1];
+      } else if (index2 === 0 && parsedData2.length > 0) {
+        d2 = parsedData2[0];
       }
 
       // If we found no points, hide tooltip
@@ -479,15 +540,15 @@ const MultiTS = ({
       )}<br>`;
 
       if (d) {
-        tooltipHTML += `<strong>${
-          data.title || "Location 1"
-        }:</strong> ${d.value.toFixed(2)} ${data.units || ""}<br>`;
+        tooltipHTML += `<strong>Yuma, CA:</strong> ${d.value.toFixed(2)} ${
+          data.units || ""
+        }<br>`;
       }
 
       if (d2) {
-        tooltipHTML += `<strong>${
-          data2.title || "Location 2"
-        }:</strong> ${d2.value.toFixed(2)} ${data2.units || ""}`;
+        tooltipHTML += `<strong>Bombay Beach, CA:</strong> ${d2.value.toFixed(
+          2
+        )} ${data2.units || ""}`;
       }
 
       // Update tooltip
@@ -498,15 +559,48 @@ const MultiTS = ({
         .style("top", `${event.pageY - 30}px`);
     }
 
-    function hideTooltip() {
-      focus.style("opacity", 0);
-      focus2.style("opacity", 0);
-      hoverLine.style("opacity", 0);
-      tooltip.style("opacity", 0);
-    }
+    // Create a container for mouse events
+    const overlay = chartArea
+      .append("rect")
+      .attr("class", "overlay")
+      .attr("width", width)
+      .attr("height", height)
+      .style("fill", "none")
+      .style("pointer-events", "all");
+
+    // Define the zoom behavior
+    const zoom = d3
+      .zoom()
+      .scaleExtent([1, 50])
+      .translateExtent([
+        [0, 0],
+        [width, height],
+      ])
+      .extent([
+        [0, 0],
+        [width, height],
+      ])
+      .on("zoom", handleZoom);
+
+    // Add zoom behavior to svg
+    svg.call(zoom);
+    zoomRef.current = zoom;
 
     // Add mouse events
     overlay.on("mousemove", handleMouseMove).on("mouseout", hideTooltip);
+
+    // Initialize window variables for SummaryStats
+    window.visibleTimeSeriesData = {
+      ...data,
+      dates: data.dates,
+      values: data.values,
+    };
+
+    window.visibleTimeSeriesData2 = {
+      ...data2,
+      dates: data2.dates,
+      values: data2.values,
+    };
 
     // Remove any existing trendline instance
     setTrendlineInstance(null);
@@ -528,8 +622,11 @@ const MultiTS = ({
     // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
+      // Clean up global variables on unmount
+      delete window.visibleTimeSeriesData;
+      delete window.visibleTimeSeriesData2;
     };
-  }, [data, data2, onVisibleDataChange, yAxisTitle]);
+  }, [data, data2, onVisibleDataChange, onVisibleData2Change, yAxisTitle]);
 
   // Handle trendline
   useEffect(() => {
